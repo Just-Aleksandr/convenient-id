@@ -15,7 +15,7 @@ router.get("/", [check("rfid").exists()], async (req, res) => {
     },
   });
 
-  createScanEntry(req.query.rfid);
+  createScanEntry(req.query.rfid, !!result);
 
   res.json(!!result);
 });
@@ -31,11 +31,11 @@ router.post("/", async (req, res) => {
   }
 });
 
-async function createScanEntry(rfid) {
+async function createScanEntry(rfid, status) {
   try {
     const newScan = await scans.create({
       rfid: rfid,
-      time: new Date(), // Sets the current time
+      accepted: status,
     });
     // console.log("New scan entry created:", newScan);
   } catch (error) {

@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-  const scans = sequelize.define("users", {
+  const users = sequelize.define("users", {
     rfid: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -19,5 +19,5 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  return scans;
+  return users;
 };

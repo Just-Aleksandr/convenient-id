@@ -19,7 +19,7 @@ bool IS_DEBUG_ENABLED = true;
 byte mac[] = {  0xA8, 0x61, 0x0A, 0xAE, 0xDE, 0x39 };
 int    HTTP_PORT   = 3141;
 String HTTP_METHOD = "GET"; // or "POST"
-char   HOST_NAME[] = "192.168.1.9"; // hostname of web server:
+char   HOST_NAME[] = "172.16.0.9"; // hostname of web server:
 String PATH_NAME   = "/users";
 
 // Initialize the Ethernet client library

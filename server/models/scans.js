@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      accepted: {
+      authorized: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
       },

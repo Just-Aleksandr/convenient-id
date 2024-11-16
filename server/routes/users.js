@@ -33,9 +33,9 @@ router.post("/", async (req, res) => {
 
 async function createScanEntry(rfid, status) {
   try {
-    const newScan = await scans.create({
+    await scans.create({
       rfid: rfid,
-      accepted: status,
+      authorized: status,
     });
     // console.log("New scan entry created:", newScan);
   } catch (error) {

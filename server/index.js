@@ -65,7 +65,8 @@ function getEthernetIP() {
         details.family === "IPv4" && // Only IPv4 addresses
         !details.internal && // Exclude internal interfaces
         (ifaceName.toLowerCase().includes("ethernet") || // Match "Ethernet" in the name
-          ifaceName.toLowerCase().includes("en")) // Match for Linux/Mac (e.g., "en0")
+          ifaceName.toLowerCase().includes("en") || // Match for Linux/Mac (e.g., "en0")
+          ifaceName.toLowerCase().includes("wi-fi"))
       ) {
         return details.address;
       }

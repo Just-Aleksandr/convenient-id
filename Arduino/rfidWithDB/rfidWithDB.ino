@@ -37,6 +37,8 @@ unsigned long previousMillis = 0; // Stores the last time the function was calle
 const unsigned long interval = 15000; // Interval in milliseconds (15,000ms = 15 seconds)
 unsigned long currentMillis = 0;
 
+boolean isServerOnline = false;
+
 // Initialize the Ethernet client library
 // with the IP address and port of the server
 // that you want to connect to (port 80 is default for HTTP):
@@ -73,6 +75,11 @@ void loop() {
     getServerIP();
   }
 
+  // Check if the server is online
+    if (!isServerOnline) {
+      return;
+    }
+  
   // Look for new cards
   if ( ! mfrc522.PICC_IsNewCardPresent()) 
   {
@@ -164,6 +171,8 @@ void ethernetUnplugged() {
     delay(200);
     tone(PIEZO,400,200);
     delay(200);
+    digitalWrite(RED_LED,0);
+    digitalWrite(GREEN_LED,0);
     while (Ethernet.linkStatus() == LinkOFF) {
       digitalWrite(RED_LED,1);
       delay(500);
@@ -225,7 +234,6 @@ void establishConnection() {
 }
 
 void getServerIP() {
-  TryToGetServerIP:
   // Broadcast a message to discover the server
   sendBroadcastMessage(EXPECTED_MESSAGE);
 
@@ -235,12 +243,13 @@ void getServerIP() {
   if(!listenForResponse()) {
     digitalWrite(RED_LED,1);
     digitalWrite(GREEN_LED,1);
-    delay(interval);
-    goto TryToGetServerIP;
+    isServerOnline = false;
+    return;
   }
   digitalWrite(RED_LED,0);
   digitalWrite(GREEN_LED,0);
   Serial.println("Ready to scan.");
+  isServerOnline = true;
 }
 
 String scanRFID() {
@@ -273,10 +282,9 @@ bool validateRFID(String rfid) {
     // If you didn't get a connection to the server:
     if (IS_DEBUG_ENABLED) {
       Serial.println("Connection failed");
-      ethernetUnplugged();
-      getServerIP();
     }
-    
+    ethernetUnplugged();
+    getServerIP();
   }
   // If there are incoming bytes available
   // from the server, read them and print them:

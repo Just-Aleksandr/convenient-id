@@ -1,7 +1,11 @@
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
 #include <SPI.h>
 #include <MFRC522.h>
 #include <Ethernet.h>
 #include <EthernetUdp.h>
+
+LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 if 0x3F not working
 
 #define SS_PIN 5
 #define RST_PIN 9
@@ -51,6 +55,16 @@ void setup()
   pinMode(GREEN_LED,OUTPUT);
   pinMode(PIEZO,OUTPUT);
   Serial.begin(9600);   // Initiate a serial communication
+
+  lcd.init();                      // initialize the lcd 
+  // Print a message to the LCD.
+  lcd.backlight();
+  lcd.setCursor(3,0);
+  lcd.print(F("Hello there!"));
+  lcd.setCursor(1,1);
+  lcd.print(F("General Kenobi!"));
+  delay(1000);
+  
   SPI.begin();      // Initiate  SPI bus
   mfrc522.PCD_Init();   // Initiate MFRC522
   // Check if the Ethernet cable is unplugged
@@ -92,7 +106,8 @@ void loop() {
   }
   // Show UID on serial monitor
   String rfid= scanRFID();
-  Serial.print("UID tag: " + rfid);
+  Serial.print(F("UID tag: "));
+  Serial.print(rfid);
   Serial.println();
   // Change here the UID of the card/cards that you want to give access
   if (validateRFID(rfid)) {
@@ -107,18 +122,18 @@ void sendBroadcastMessage(String message) {
   Udp.beginPacket(broadcastIP, localPort);  // Send to broadcast IP and local port
   Udp.write(message.c_str());
   Udp.endPacket();
-  Serial.println("Broadcast message sent!");
+  Serial.println(F("Broadcast message sent!"));
 }
 
 // Function to listen for a response and find the server IP
 boolean listenForResponse() {
-  Serial.println("Listening for response...");
+  Serial.println(F("Listening for response..."));
   int packetSize = Udp.parsePacket();  // Check for incoming UDP packets
   if (packetSize) {
     char packetBuffer[packetSize];
     Udp.read(packetBuffer, packetSize);
     String response = String(packetBuffer);
-    Serial.print("Received response: ");
+    Serial.print(F("Received response: "));
     Serial.println(response);
 
     // Check if the response contains the server IP (you can customize this as needed)
@@ -129,13 +144,13 @@ boolean listenForResponse() {
       serverIP = parseIPAddress(ipString);
 
       // Once we have the server IP, we can stop listening and start communication
-      Serial.print("Server IP found: ");
+      Serial.print(F("Server IP found: "));
       Serial.println(serverIP);
       return true;
       // You can now send requests to the server using serverIP
     }
   } else {
-    Serial.println("Error! No packets received! Server may be offline!");
+    Serial.println(F("Error! No packets received! Server may be offline!"));
     return false;
   }
 }
@@ -166,7 +181,7 @@ IPAddress calculateBroadcastIP(IPAddress localIP, IPAddress subnetMask) {
 void ethernetUnplugged() {
   if (Ethernet.linkStatus() == LinkOFF) {
     isEthernetConnected = false;
-    Serial.println("Error! The Ethernet cable is unplugged!");
+    Serial.println(F("Error! The Ethernet cable is unplugged!"));
     tone(PIEZO,800,200);
     delay(200);
     tone(PIEZO,400,200);
@@ -185,9 +200,9 @@ void ethernetUnplugged() {
 
 void establishConnection() {
   ethernet:
-  Serial.println("Attempting to establish an Ethernet connection...");
+  Serial.println(F("Attempting to establish an Ethernet connection..."));
   if (Ethernet.begin(mac) == 0) {
-    Serial.println("Failed to configure Ethernet using DHCP");
+    Serial.println(F("Failed to configure Ethernet using DHCP"));
     // No point in carrying on, so do nothing forevermore:
     digitalWrite(RED_LED,1);
     tone(PIEZO,800,200);
@@ -199,7 +214,7 @@ void establishConnection() {
     goto ethernet;
   }
   isEthernetConnected = true;
-  Serial.print("Ethernet connected with ip: ");
+  Serial.print(F("Ethernet connected with ip: "));
   Serial.println(Ethernet.localIP());
   
   // Calculate the broadcast address dynamically
@@ -210,10 +225,10 @@ void establishConnection() {
   
   // Start UDP on specified port
   Udp.begin(localPort);
-  Serial.print("Listening on port: ");
+  Serial.print(F("Listening on port: "));
   Serial.println(localPort);
   
-  Serial.print("Broadcast IP: ");
+  Serial.print(F("Broadcast IP: "));
   Serial.println(broadcastIP);
   
   digitalWrite(RED_LED,0);
@@ -248,7 +263,7 @@ void getServerIP() {
   }
   digitalWrite(RED_LED,0);
   digitalWrite(GREEN_LED,0);
-  Serial.println("Ready to scan.");
+  Serial.println(F("Ready to scan."));
   isServerOnline = true;
 }
 
@@ -264,24 +279,29 @@ String scanRFID() {
 
 bool validateRFID(String rfid) {
   if (IS_DEBUG_ENABLED) {
-    Serial.print("Connecting to ");
+    Serial.print(F("Connecting to "));
     Serial.println(serverIP);
   }
   // If you get a connection, report back via serial:
   if (client.connect(serverIP, HTTP_PORT)) {
     if (IS_DEBUG_ENABLED) {
-      Serial.println("Connected");
+      Serial.println(F("Connected"));
     }
     // Send HTTP request header
-    client.println(HTTP_METHOD + " " + PATH_NAME + "?rfid=" + rfid + " HTTP/1.1");
-    client.print("Host: ");
+    client.print(HTTP_METHOD);
+    client.print(F(" "));
+    client.print(PATH_NAME);
+    client.print(F("?rfid="));
+    client.print(rfid);
+    client.println(F(" HTTP/1.1"));
+    client.print(F("Host: "));
     client.println(serverIP);
-    client.println("Connection: close");
+    client.println(F("Connection: close"));
     client.println(); // end HTTP request header
   } else {
     // If you didn't get a connection to the server:
     if (IS_DEBUG_ENABLED) {
-      Serial.println("Connection failed");
+      Serial.println(F("Connection failed"));
     }
     ethernetUnplugged();
     getServerIP();
@@ -299,10 +319,10 @@ bool validateRFID(String rfid) {
   if (!client.connected()) {
     if (IS_DEBUG_ENABLED) {
       Serial.println(response);
-      Serial.println("disconnecting.");
+      Serial.println(F("disconnecting."));
     }
     client.stop();
-    if (getResponseBody(response).equalsIgnoreCase("true")) {
+    if (getResponseBody(response).equalsIgnoreCase(F("true"))) {
       return true;
     } else {
       return false;
@@ -319,7 +339,7 @@ String getResponseBody(String response) {
 
 
 void authorized() {
-  Serial.println("Authorized access\n");
+  Serial.println(F("Authorized access\n"));
   tone(PIEZO,1000,200);
   digitalWrite(GREEN_LED,1);
   delay(200);
@@ -328,7 +348,7 @@ void authorized() {
 }
 
 void denied() {
-  Serial.println("Access denied\n");
+  Serial.println(F("Access denied\n"));
   tone(PIEZO,500,500);
   for(int i = 0; i < 3; i++) {
     digitalWrite(RED_LED,1);

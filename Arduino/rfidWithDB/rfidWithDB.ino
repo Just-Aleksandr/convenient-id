@@ -42,6 +42,7 @@ const unsigned long interval = 15000; // Interval in milliseconds (15,000ms = 15
 unsigned long currentMillis = 0;
 
 boolean isServerOnline = false;
+boolean isDisplayingReadiness = false;
 
 // Initialize the Ethernet client library
 // with the IP address and port of the server
@@ -59,10 +60,8 @@ void setup()
   lcd.init();                      // initialize the lcd 
   // Print a message to the LCD.
   lcd.backlight();
-  lcd.setCursor(3,0);
-  lcd.print(F("Hello there!"));
-  lcd.setCursor(1,1);
-  lcd.print(F("General Kenobi!"));
+  lcd.setCursor(0,0);
+  lcd.print(F("Initializing..."));
   delay(1000);
   
   SPI.begin();      // Initiate  SPI bus
@@ -90,9 +89,17 @@ void loop() {
   }
 
   // Check if the server is online
-    if (!isServerOnline) {
-      return;
-    }
+  if (!isServerOnline) {
+    return;
+  }
+
+  if (!isDisplayingReadiness) {
+    Serial.println(F("Ready to scan."));
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print(F("Ready to scan."));
+    isDisplayingReadiness = true;
+  }
   
   // Look for new cards
   if ( ! mfrc522.PICC_IsNewCardPresent()) 
@@ -104,6 +111,10 @@ void loop() {
   {
     return;
   }
+  
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(F("Scanning..."));
   // Show UID on serial monitor
   String rfid= scanRFID();
   Serial.print(F("UID tag: "));
@@ -188,17 +199,31 @@ void ethernetUnplugged() {
     delay(200);
     digitalWrite(RED_LED,0);
     digitalWrite(GREEN_LED,0);
+    if (Ethernet.linkStatus() == LinkOFF) {
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print(F("Ethernet cable"));
+      lcd.setCursor(0,1);
+      lcd.print(F("not connected!"));
+      isDisplayingReadiness = false;
+    }
     while (Ethernet.linkStatus() == LinkOFF) {
       digitalWrite(RED_LED,1);
       delay(500);
       digitalWrite(RED_LED,0);
       delay(500);
     }
+    lcd.clear();
     establishConnection();
   }
 }
 
 void establishConnection() {
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(F("Establishing"));
+  lcd.setCursor(0,1);
+  lcd.print(F("connection..."));
   ethernet:
   Serial.println(F("Attempting to establish an Ethernet connection..."));
   if (Ethernet.begin(mac) == 0) {
@@ -216,6 +241,12 @@ void establishConnection() {
   isEthernetConnected = true;
   Serial.print(F("Ethernet connected with ip: "));
   Serial.println(Ethernet.localIP());
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(F("Connected w/ ip:"));
+  lcd.setCursor(0,1);
+  lcd.print(Ethernet.localIP());
+  isDisplayingReadiness = false;
   
   // Calculate the broadcast address dynamically
   broadcastIP = calculateBroadcastIP(Ethernet.localIP(), subnet);
@@ -259,11 +290,14 @@ void getServerIP() {
     digitalWrite(RED_LED,1);
     digitalWrite(GREEN_LED,1);
     isServerOnline = false;
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print(F("Server not found"));
+    isDisplayingReadiness = false;
     return;
   }
   digitalWrite(RED_LED,0);
   digitalWrite(GREEN_LED,0);
-  Serial.println(F("Ready to scan."));
   isServerOnline = true;
 }
 
@@ -339,7 +373,11 @@ String getResponseBody(String response) {
 
 
 void authorized() {
-  Serial.println(F("Authorized access\n"));
+  isDisplayingReadiness = false;
+  Serial.println(F("Access granted!\n"));
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(F("Access granted!"));
   tone(PIEZO,1000,200);
   digitalWrite(GREEN_LED,1);
   delay(200);
@@ -348,7 +386,11 @@ void authorized() {
 }
 
 void denied() {
-  Serial.println(F("Access denied\n"));
+  isDisplayingReadiness = false;
+  Serial.println(F("Access denied!\n"));
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(F("Access denied!"));
   tone(PIEZO,500,500);
   for(int i = 0; i < 3; i++) {
     digitalWrite(RED_LED,1);

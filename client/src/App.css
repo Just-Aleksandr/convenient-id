@@ -1,0 +1,45 @@
+.App {
+  text-align: center;
+}
+
+.table-container {
+  overflow-y: auto;
+  max-height: 80vh;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+th,
+td {
+  border: 1px solid black;
+  padding: 8px;
+  text-align: left;
+  word-wrap: break-word;
+}
+
+thead {
+  position: sticky;
+  top: 0;
+  background-color: #f1f1f1;
+  z-index: 1;
+}
+
+tbody tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #ffffff;
+}
+
+.authorized-status {
+  color: green;
+}
+
+.unauthorized-status {
+  color: red;
+}

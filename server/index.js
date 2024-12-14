@@ -2,16 +2,20 @@ const express = require("express");
 const app = express();
 const dgram = require("dgram");
 const os = require("os");
+const cors = require("cors");
 const MAIN_PORT = 3141;
 
 app.use(express.json());
+app.use(cors());
 
 const db = require("./models");
 
 // Routers
 const usersRouter = require("./routes/users");
+const scansRouter = require("./routes/scans");
 const { json } = require("sequelize");
 app.use("/users", usersRouter);
+app.use("/scans", scansRouter);
 
 db.sequelize.sync().then(() => {
   app.listen(MAIN_PORT, () => {

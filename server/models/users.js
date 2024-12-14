@@ -19,5 +19,9 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
+  users.associate = (models) => {
+    users.hasMany(models.scans, { foreignKey: "rfid", sourceKey: "rfid" });
+  };
+
   return users;
 };

@@ -23,5 +23,9 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
+  scans.associate = (models) => {
+    scans.belongsTo(models.users, { foreignKey: "rfid", targetKey: "rfid" });
+  };
+
   return scans;
 };
